@@ -9,35 +9,38 @@
 import UIKit
 import RealmSwift
 
-class ToDoListViewController: UITableViewController {
+class ToDoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
     var selectedCategory: Category? {
         didSet {
+            print("selectedCategory: Category?")
             loadItems()
         }
     }
      
     override func viewDidLoad() {
-        print(#function)
-        super.viewDidLoad()  
+        print("\(#function) from ToDoListViewController")
 
+        super.viewDidLoad()
     }
     
     //MARK: - TableView Datasouce Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print(#function)
+        print("\(#function) from ToDoListViewController")
+
         return todoItems?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        print(#function)
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        
+        print("\(#function) from ToDoListViewController")
+
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+
         if let item = todoItems?[indexPath.row] {
+            print("Loading Items")
             cell.textLabel?.text = item.title
             
             // Swift - Ternary Operator
@@ -52,8 +55,8 @@ class ToDoListViewController: UITableViewController {
     
     //MARK: - TableView Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(#function)
-        
+        print("\(#function) from ToDoListViewController")
+
         if let item = todoItems?[indexPath.row] {
             do {
                 try realm.write {
@@ -71,8 +74,8 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Add New Items
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
-        print(#function)
-        
+        print("\(#function) from ToDoListViewController")
+
         var textField = UITextField()
         
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
@@ -105,11 +108,30 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Model Manipulation Methods
     
     func loadItems() {
-        print(#function)
+        print("\(#function) from ToDoListViewController")
 
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
 
         tableView.reloadData()
+    }
+    
+    //MARK: - Delete Data From Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        print("\(#function) from ToDoListViewController")
+        
+        print(selectedCategory!)
+        
+        if let itemForDeletion = todoItems?[indexPath.row]
+        {
+            do {
+                try self.realm.write {
+                    self.realm.delete(itemForDeletion)
+                }
+            } catch {
+                print("Error deleting category, \(error.localizedDescription)")
+            }
+        }
     }
 }
 
@@ -118,8 +140,8 @@ class ToDoListViewController: UITableViewController {
 extension ToDoListViewController: UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        print(#function)
-        
+        print("\(#function) from ToDoListViewController")
+
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         //todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
 
@@ -127,7 +149,7 @@ extension ToDoListViewController: UISearchBarDelegate {
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print(#function)
+        print("\(#function) from ToDoListViewController")
 
         if searchBar.text?.count == 0 {
             loadItems()

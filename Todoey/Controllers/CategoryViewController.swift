@@ -9,31 +9,32 @@
 import UIKit
 import RealmSwift
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()    // try! works because it might fail with constraints resources
     
     var categories: Results<Category>? //Force unwrapping is not ideal, optional is better
     
     override func viewDidLoad() {
+        print("\(#function) from CategoryViewController")
+        
         super.viewDidLoad()
         
         loadCategories()
-        
     }
     
     //MARK: - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print(#function)
-        
+        print("\(#function) from CategoryViewController")
+
         return categories?.count ?? 1 // Nil Coalescing Operator, means if nil, return 1
     }
-    
+
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        print(#function)
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        print("\(#function) from CategoryViewController")
+
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
         
@@ -43,8 +44,8 @@ class CategoryViewController: UITableViewController {
     //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(#function)
-        
+        print("\(#function) from CategoryViewController")
+
         performSegue(withIdentifier: "goToItems", sender: self)
         
         tableView.deselectRow(at: indexPath, animated: true)
@@ -61,8 +62,8 @@ class CategoryViewController: UITableViewController {
     //MARK: - TableView Data Manipulation Methods
     
     func save(category: Category) {
-        print(#function)
-        
+        print("\(#function) from CategoryViewController")
+
         do {
             try realm.write {
                 realm.add(category)
@@ -75,18 +76,34 @@ class CategoryViewController: UITableViewController {
     }
     
     func loadCategories() {
-        print(#function)
+        print("\(#function) from CategoryViewController")
 
         categories = realm.objects(Category.self)
         
         tableView.reloadData()
     }
     
+    //MARK: - Delete Data From Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        print("\(#function) from CategoryViewController")
+
+        if let categoryForDeletion = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting category, \(error.localizedDescription)")
+            }
+        }
+    }
+    
     //MARK: - Add New Categories
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
-        print(#function)
-        
+        print("\(#function) from CategoryViewController")
+
         var textField = UITextField()
         
         let alert = UIAlertController(title: "Add New Category", message: "", preferredStyle: .alert)
